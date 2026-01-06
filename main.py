@@ -104,7 +104,7 @@ async def daily_claim(client, message: Message):
         await message.reply_text(f"<b>❌ ᴀʟʀᴇᴀᴅʏ ᴄʟᴀɪᴍᴇᴅ!\n🕒 ᴛʀʏ ᴀɢᴀɪɴ ɪɴ {remaining} ʜᴏᴜʀs.</b>")
         return
 
-    bonus = 100
+    bonus = 1
     users_col.update_one({"user_id": user_id}, {"$inc": {"coins": bonus}, "$set": {"last_claim": current_time}})
     await message.reply_text(f"<b>┌╼「 🎁 ᴅᴀɪʟʏ ʙᴏɴᴜs 」</b>\n<b>│ ᴜsᴇʀ: {get_mention(user_id, message.from_user.first_name)}</b>\n<b>│ ᴀᴍᴏᴜɴᴛ: +{bonus} ᴄᴏɪɴs</b>\n<b>└╼━━━━ {B} ━━━━╾┘</b>")
 
