@@ -16,14 +16,15 @@ API_HASH = "6fc0ea1c8dacae05751591adedc177d7"
 BOT_TOKEN = "8513850569:AAHCsKyy1nWTYVKH_MtbW8IhKyOckWLTEDA"
 B = "ᴅx" 
 
-# --- MONGODB CONNECTION (SECURED) ---
-MONGO_URL = "mongodb+srv://shadowur6_db_user:8AIIxZUjpanaQBjh@dx-codex.fmqcovu.mongodb.net/?appName=Dx-codex"
-client_db = MongoClient(MONGO_URL)
+# --- MONGODB CONNECTION (SECURED & STABLE) ---
+# কানেকশন স্ট্রিং এ ছোট কিছু প্যারামিটার অ্যাড করা হয়েছে স্ট্যাবিলিটির জন্য
+MONGO_URL = "mongodb+srv://shadowur6_db_user:8AIIxZUjpanaQBjh@dx-codex.fmqcovu.mongodb.net/?retryWrites=true&w=majority&appName=Dx-codex"
+client_db = MongoClient(MONGO_URL, connectTimeoutMS=30000, socketTimeoutMS=None, connect=False)
 db = client_db["DX_COIN_DB"]
 users_col = db["users"]
 
 # --- WEB SERVER & KEEP ALIVE ---
-APP_URL = os.environ.get("https://dark-coin.onrender.com") # Render Dashboard এ আপনার URL সেট করবেন
+APP_URL = os.environ.get("APP_URL") 
 web = Flask('')
 @web.route('/')
 def home(): return f"{B} COIN SYSTEM ONLINE & DATA SECURED ✨"
@@ -37,6 +38,7 @@ def ping_self():
         try:
             if APP_URL:
                 requests.get(APP_URL, timeout=10)
+                print("Ping sent to keep bot alive...")
         except: pass
         time.sleep(300)
 
@@ -48,8 +50,10 @@ INIT_SUDO = [6366113192, 6703335929, 6737589257]
 # --- HELPERS ---
 async def check_sudo(user_id):
     if user_id in INIT_SUDO: return True
-    user = users_col.find_one({"user_id": user_id})
-    return user.get("is_sudo", 0) == 1 if user else False
+    try:
+        user = users_col.find_one({"user_id": user_id})
+        return user.get("is_sudo", 0) == 1 if user else False
+    except: return False
 
 def get_mention(user_id, name):
     clean_name = re.sub(r'[<>#]', '', name or "User")
@@ -57,13 +61,16 @@ def get_mention(user_id, name):
 
 def sync_data(user):
     if not user: return
-    name = f"{user.first_name} {user.last_name or ''}".strip()
-    users_col.update_one(
-        {"user_id": user.id},
-        {"$set": {"full_name": name, "username": user.username}, 
-         "$setOnInsert": {"coins": 0, "is_sudo": 0}},
-        upsert=True
-    )
+    try:
+        name = f"{user.first_name} {user.last_name or ''}".strip()
+        users_col.update_one(
+            {"user_id": user.id},
+            {"$set": {"full_name": name, "username": user.username}, 
+             "$setOnInsert": {"coins": 0, "is_sudo": 0}},
+            upsert=True
+        )
+    except Exception as e:
+        print(f"Database Sync Error: {e}")
 
 # --- 1. SUDO SYSTEM ---
 @app.on_message(filters.command("sudo") & filters.group)
@@ -88,10 +95,10 @@ async def sudo_handler(client, message: Message):
             f"<b>┗━━━━━━━━━ {B} ━━━━━━━━━┛</b>"
         )
     else:
-        sudos = users_col.find({"is_sudo": 1})
+        sudos = list(users_col.find({"is_sudo": 1}))
         res = f"<b>╭╼━「 ✨ sᴜᴅᴏ ᴜsᴇʀs 」━╾╮</b>\n┃\n"
-        for i, s in enumerate(list(sudos), 1):
-            res += f"<b>┃ {i}.</b> {get_mention(s['user_id'], s['full_name'])}\n"
+        for i, s in enumerate(sudos, 1):
+            res += f"<b>┃ {i}.</b> {get_mention(s['user_id'], s.get('full_name', 'Unknown'))}\n"
         res += f"┃\n<b>╰╼━━━━━━━ {B} ━━━━━━━╾╯</b>"
         await message.reply_text(res)
     try: await message.delete()
@@ -199,13 +206,16 @@ async def check_stats(client, message: Message):
 
 @app.on_message(filters.command("top") & filters.group)
 async def leaderboard(client, message: Message):
-    rows = users_col.find().sort("coins", -1).limit(10)
-    board = f"<b>╭╼━━━━━「 🏆 ᴛᴏᴘ 10 」━━━━━╾╮</b>\n┃\n"
-    for i, row in enumerate(list(rows), 1):
-        emoji = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else "🔹"
-        board += f"<b>┃ {emoji} {i:02d}.</b> {get_mention(row['user_id'], row['full_name'])} ➲ <code>{row['coins']}</code>\n"
-    board += f"┃\n<b>╰╼━━━━━━━ {B} ━━━━━━━╾╯</b>"
-    await message.reply_text(board)
+    try:
+        rows = list(users_col.find().sort("coins", -1).limit(10))
+        board = f"<b>╭╼━━━━━「 🏆 ᴛᴏᴘ 10 」━━━━━╾╮</b>\n┃\n"
+        for i, row in enumerate(rows, 1):
+            emoji = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else "🔹"
+            board += f"<b>┃ {emoji} {i:02d}.</b> {get_mention(row['user_id'], row.get('full_name', 'Unknown'))} ➲ <code>{row.get('coins', 0)}</code>\n"
+        board += f"┃\n<b>╰╼━━━━━━━ {B} ━━━━━━━╾╯</b>"
+        await message.reply_text(board)
+    except Exception as e:
+        print(f"Top Error: {e}")
     try: await message.delete()
     except: pass
 
@@ -214,9 +224,13 @@ async def leaderboard(client, message: Message):
 async def auto_sync(client, message: Message):
     if message.from_user: sync_data(message.from_user)
 
-# --- START ---
+# --- MAIN ---
 if __name__ == "__main__":
+    # Start Web Server
     Thread(target=run_web).start()
+    # Start Keep Alive
     if APP_URL:
         Thread(target=ping_self, daemon=True).start()
+    # Run Bot
+    print("Bot is starting...")
     app.run()
