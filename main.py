@@ -23,7 +23,7 @@ db = client_db["DX_COIN_DB"]
 users_col = db["users"]
 
 # --- WEB SERVER & KEEP ALIVE ---
-APP_URL = os.environ.get("APP_URL") 
+APP_URL = os.environ.get("https://dark-coin.onrender.com") 
 web = Flask('')
 @web.route('/')
 def home(): return f"{B} ADVANCED SYSTEM ONLINE"
