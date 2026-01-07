@@ -1,6 +1,5 @@
 pyrogram
 tgcrypto
-Pyrebase4
+pymongo[srv]
 flask
 requests
-gunicorn
