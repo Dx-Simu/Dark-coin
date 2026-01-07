@@ -68,21 +68,20 @@ async def del_cmd(message: Message):
     try: await message.delete()
     except: pass
 
-# --- 1. MENU (COMPACT ADVANCED) ---
+# --- 1. MENU ---
 @app.on_message(filters.command("menu") & filters.group)
 async def menu_handler(client, message: Message):
     await del_cmd(message)
     await message.reply_text(
-        f"<b>┌╼「 ✨ {B} ᴍᴇɴᴜ 」</b>\n"
-        f"<b>├ 📊 ᴜsᴇʀ:</b> /coin, /top, /claim\n"
-        f"<b>├ 🏦 ᴠᴀᴜʟᴛ:</b> /vault, /gift, /shop\n"
-        f"<b>├ 📢 ᴀᴅs:</b> /buyad (10 ᴄᴏɪɴs)\n"
-        f"<b>├ 📜 ʀᴜʟᴇ:</b> 80 ᴍsɢ = 1 ᴄᴏɪɴ\n"
-        f"<b>├ ⚡ sᴜᴅᴏ:</b> /acoin, /mcoin, /reset, /sudo\n"
-        f"<b>└╼━━━━ {B} ━━━━╾┘</b>"
+        f"<b>╭╼「 ✨ {B} ᴍᴇɴᴜ 」</b>\n"
+        f"<b>│ 👤 {get_mention(message.from_user.id, message.from_user.first_name)}</b>\n"
+        f"<b>├ 📊 /coin • /top • /claim</b>\n"
+        f"<b>├ 🏦 /vault • /gift • /shop</b>\n"
+        f"<b>├ 📢 /buyad | ⚡ /sudo</b>\n"
+        f"<b>╰╼━━━━ {B} ━━━━╾╯</b>"
     )
 
-# --- 2. COIN & RANKING (OLD LOGIC + NEW UI) ---
+# --- 2. COIN & RANKING ---
 @app.on_message(filters.command(["coin", "mycoin"]) & filters.group)
 async def check_stats(client, message: Message):
     await del_cmd(message)
@@ -91,26 +90,24 @@ async def check_stats(client, message: Message):
     user = users_col.find_one({"user_id": target.id})
     rank = users_col.count_documents({"coins": {"$gt": user['coins']}}) + 1
     await message.reply_text(
-        f"<b>┌╼「 📊 sᴛᴀᴛs 」</b>\n"
-        f"<b>├ ᴜsᴇʀ:</b> {get_mention(target.id, target.first_name)}\n"
-        f"<b>├ ᴄᴏɪɴs:</b> <code>{user['coins']}</code>\n"
-        f"<b>├ ʀᴀɴᴋ:</b> <code>#{rank}</code>\n"
-        f"<b>├ ᴛɪᴛʟᴇ:</b> {user.get('title', 'ɴᴏɴᴇ')}\n"
-        f"<b>└╼━━━━ {B} ━━━━╾┘</b>"
+        f"<b>╭╼「 📊 sᴛᴀᴛs 」</b>\n"
+        f"<b>├ ᴜsᴇʀ: {get_mention(target.id, target.first_name)}</b>\n"
+        f"<b>├ ᴄᴏɪɴ: {user['coins']} • ʀᴀɴᴋ: #{rank}</b>\n"
+        f"<b>╰╼━━━━ {B} ━━━━╾╯</b>"
     )
 
 @app.on_message(filters.command("top") & filters.group)
 async def leaderboard(client, message: Message):
     await del_cmd(message)
     rows = list(users_col.find().sort("coins", -1).limit(10))
-    board = f"<b>┌╼「 🏆 ᴛᴏᴘ ʟᴇᴀᴅᴇʀʙᴏᴀʀᴅ 」</b>\n"
+    board = f"<b>╭╼「 🏆 ᴛᴏᴘ 10 」</b>\n"
     for i, row in enumerate(rows, 1):
         emoji = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else "🔹"
-        board += f"<b>├ {emoji} {i:02d}.</b> {get_mention(row['user_id'], row.get('full_name', 'User'))} ➲ <code>{row.get('coins', 0)}</code>\n"
-    board += f"<b>└╼━━━━ {B} ━━━━╾┘</b>"
+        board += f"<b>├ {emoji} {get_mention(row['user_id'], row.get('full_name', 'User'))} • <code>{row.get('coins', 0)}</code></b>\n"
+    board += f"<b>╰╼━━━━ {B} ━━━━╾╯</b>"
     await message.reply_text(board)
 
-# --- 3. VAULT & INTEREST (DAILY) ---
+# --- 3. VAULT ---
 @app.on_message(filters.command("vault") & filters.group)
 async def vault_handler(client, message: Message):
     await del_cmd(message)
@@ -122,22 +119,21 @@ async def vault_handler(client, message: Message):
         days = int((time.time() - user.get("v_time", time.time())) / 86400)
         interest = int(user.get('vault', 0) * (days * 0.0001))
         await message.reply(
-            f"<b>┌╼「 🏦 {B} ᴠᴀᴜʟᴛ 」</b>\n"
-            f"<b>├ 💰 ᴠᴀᴜʟᴛ:</b> <code>{user.get('vault', 0)}</code>\n"
-            f"<b>├ 📈 ɪɴᴛ:</b> <code>{interest}</code> ({days}ᴅ)\n"
-            f"<b>├ ➲ /vault dep [amt]</b>\n"
-            f"<b>└╼━━━━ {B} ━━━━╾┘</b>"
+            f"<b>╭╼「 🏦 ᴠᴀᴜʟᴛ 」</b>\n"
+            f"<b>├ ᴜsᴇʀ: {get_mention(user_id, message.from_user.first_name)}</b>\n"
+            f"<b>├ ʙᴀʟ: {user.get('vault', 0)} | ɪɴᴛ: {interest}</b>\n"
+            f"<b>╰╼━━━━ {B} ━━━━╾╯</b>"
         )
     elif len(parts) >= 3:
         act, amt = parts[1], int(parts[2])
         if act == "dep" and user['coins'] >= amt:
             users_col.update_one({"user_id": user_id}, {"$inc": {"coins": -amt, "vault": amt}, "$set": {"v_time": time.time()}})
-            await message.reply("<b>✅ ᴅᴇᴘᴏsɪᴛᴇᴅ!</b>")
+            await message.reply(f"<b>✅ {get_mention(user_id, message.from_user.first_name)} ᴅᴇᴘᴏsɪᴛᴇᴅ!</b>")
         elif act == "wd" and user.get('vault', 0) >= amt:
             users_col.update_one({"user_id": user_id}, {"$inc": {"coins": amt, "vault": -amt}})
-            await message.reply("<b>🔓 ᴡɪᴛʜᴅʀᴀᴡɴ!</b>")
+            await message.reply(f"<b>🔓 {get_mention(user_id, message.from_user.first_name)} ᴡɪᴛʜᴅʀᴀᴡɴ!</b>")
 
-# --- 4. SUDO ENGINE (OLD FEATURE: ADD/LIST) ---
+# --- 4. SUDO ENGINE ---
 @app.on_message(filters.command("sudo") & filters.group)
 async def sudo_handler(client, message: Message):
     if not await check_sudo(message.from_user.id):
@@ -149,17 +145,17 @@ async def sudo_handler(client, message: Message):
         new_val = 1 if user.get("is_sudo", 0) == 0 else 0
         users_col.update_one({"user_id": target.id}, {"$set": {"is_sudo": new_val}})
         status = "✨ ᴀᴅᴅᴇᴅ" if new_val == 1 else "⚡ ʀᴇᴍᴏᴠᴇᴅ"
-        await message.reply_text(f"<b>┌╼「 sᴜᴅᴏ 」</b>\n<b>├ ᴜsᴇʀ:</b> {get_mention(target.id, target.first_name)}\n<b>├ sᴛᴀᴛᴜs:</b> {status}\n<b>└╼━━━━╾┘</b>")
+        await message.reply_text(f"<b>╭╼「 sᴜᴅᴏ 」</b>\n<b>├ ᴜsᴇʀ:</b> {get_mention(target.id, target.first_name)}\n<b>├ sᴛᴀᴛᴜs:</b> {status}\n<b>╰╼━━━━╾╯</b>")
     else:
         sudos = list(users_col.find({"is_sudo": 1}))
-        res = f"<b>┌╼「 ✨ sᴜᴅᴏ ᴜsᴇʀs 」</b>\n"
+        res = f"<b>╭╼「 ✨ sᴜᴅᴏ ʟɪsᴛ 」</b>\n"
         for i, s in enumerate(sudos, 1):
-            res += f"<b>├ {i}.</b> {get_mention(s['user_id'], s.get('full_name', 'User'))}\n"
-        res += f"<b>└╼━━━━╾┘</b>"
+            res += f"<b>├ {i}. {get_mention(s['user_id'], s.get('full_name', 'User'))}</b>\n"
+        res += f"<b>╰╼━━━━╾╯</b>"
         await message.reply_text(res)
     await del_cmd(message)
 
-# --- 5. COIN CONTROL (ACOIN, MCOIN, RESET, GIFT, CLAIM) ---
+# --- 5. COIN CONTROL ---
 @app.on_message(filters.command("acoin") & filters.group)
 async def add_coin(client, message: Message):
     if not await check_sudo(message.from_user.id) or not message.reply_to_message:
@@ -168,7 +164,7 @@ async def add_coin(client, message: Message):
         amt = int(message.text.split()[1])
         target = message.reply_to_message.from_user
         users_col.update_one({"user_id": target.id}, {"$inc": {"coins": amt}})
-        await message.reply(f"<b>💰 ᴀᴅᴅᴇᴅ {amt} ᴄᴏɪɴs ᴛᴏ {target.first_name}</b>")
+        await message.reply(f"<b>💰 ᴀᴅᴅᴇᴅ {amt} ᴄᴏɪɴs ᴛᴏ {get_mention(target.id, target.first_name)}</b>")
     except: pass
     await del_cmd(message)
 
@@ -180,7 +176,7 @@ async def minus_coin(client, message: Message):
         amt = int(message.text.split()[1])
         target = message.reply_to_message.from_user
         users_col.update_one({"user_id": target.id}, {"$inc": {"coins": -amt}})
-        await message.reply(f"<b>🔻 ᴍɪɴᴜs {amt} ᴄᴏɪɴs ғʀᴏᴍ {target.first_name}</b>")
+        await message.reply(f"<b>🔻 ᴍɪɴᴜs {amt} ᴄᴏɪɴs ғʀᴏᴍ {get_mention(target.id, target.first_name)}</b>")
     except: pass
     await del_cmd(message)
 
@@ -190,16 +186,18 @@ async def reset_coin(client, message: Message):
         return await del_cmd(message)
     target = message.reply_to_message.from_user
     users_col.update_one({"user_id": target.id}, {"$set": {"coins": 0}})
-    await message.reply(f"<b>🌀 ʙᴀʟᴀɴᴄᴇ ʀᴇsᴇᴛ ғᴏʀ {target.first_name}</b>")
+    await message.reply(f"<b>🌀 ʙᴀʟᴀɴᴄᴇ ʀᴇsᴇᴛ ғᴏʀ {get_mention(target.id, target.first_name)}</b>")
     await del_cmd(message)
 
 @app.on_message(filters.command("claim") & filters.group)
 async def daily_claim(client, message: Message):
     await del_cmd(message)
-    user = users_col.find_one({"user_id": message.from_user.id})
-    if time.time() - user.get("last_claim", 0) < 86400: return await message.reply("<b>❌ ᴛᴏᴍᴏʀʀᴏᴡ!</b>")
-    users_col.update_one({"user_id": message.from_user.id}, {"$inc": {"coins": 100}, "$set": {"last_claim": time.time()}})
-    await message.reply("<b>🎁 100 ᴄᴏɪɴs ᴄʟᴀɪᴍᴇᴅ!</b>")
+    user_id = message.from_user.id
+    user = users_col.find_one({"user_id": user_id})
+    if time.time() - user.get("last_claim", 0) < 86400: 
+        return await message.reply(f"<b>❌ {get_mention(user_id, message.from_user.first_name)}, ᴛʀʏ ᴛᴏᴍᴏʀʀᴏᴡ!</b>")
+    users_col.update_one({"user_id": user_id}, {"$inc": {"coins": 100}, "$set": {"last_claim": time.time()}})
+    await message.reply(f"<b>🎁 {get_mention(user_id, message.from_user.first_name)}, 100 ᴄᴏɪɴs ᴄʟᴀɪᴍᴇᴅ!</b>")
 
 @app.on_message(filters.command("gift") & filters.group)
 async def gift_coin(client, message: Message):
@@ -207,35 +205,39 @@ async def gift_coin(client, message: Message):
     if not message.reply_to_message: return
     try:
         amt = int(message.text.split()[1])
-        sender = users_col.find_one({"user_id": message.from_user.id})
+        sender_id = message.from_user.id
+        target_id = message.reply_to_message.from_user.id
+        sender = users_col.find_one({"user_id": sender_id})
         if sender['coins'] >= amt:
-            users_col.update_one({"user_id": message.from_user.id}, {"$inc": {"coins": -amt}})
-            users_col.update_one({"user_id": message.reply_to_message.from_user.id}, {"$inc": {"coins": amt}})
-            await message.reply("<b>💸 ɢɪғᴛ sᴇɴᴛ!</b>")
+            users_col.update_one({"user_id": sender_id}, {"$inc": {"coins": -amt}})
+            users_col.update_one({"user_id": target_id}, {"$inc": {"coins": amt}})
+            await message.reply(f"<b>💸 {get_mention(sender_id, message.from_user.first_name)} ɢɪғᴛᴇᴅ {amt} ᴛᴏ {get_mention(target_id, message.reply_to_message.from_user.first_name)}!</b>")
     except: pass
 
 # --- 6. SHOP & ADS ---
 @app.on_message(filters.command("buyad") & filters.group)
 async def buy_ad(client, message: Message):
     await del_cmd(message)
-    user = users_col.find_one({"user_id": message.from_user.id})
-    if user['coins'] < 10: return await message.reply("<b>❌ ɴᴇᴇᴅ 10 ᴄᴏɪɴs!</b>")
+    user_id = message.from_user.id
+    user = users_col.find_one({"user_id": user_id})
+    if user['coins'] < 10: return await message.reply(f"<b>❌ {get_mention(user_id, message.from_user.first_name)}, ɴᴇᴇᴅ 10 ᴄᴏɪɴs!</b>")
     ad = message.text.split(None, 1)[1]
-    users_col.update_one({"user_id": message.from_user.id}, {"$inc": {"coins": -10}})
-    await message.reply(f"<b>┌╼「 📢 {B} ᴀᴅ 」</b>\n<b>├ ʙʏ:</b> {get_mention(message.from_user.id, message.from_user.first_name)}\n<b>├ ᴍsɢ:</b> {ad}\n<b>└╼━━━━╾┘</b>")
+    users_col.update_one({"user_id": user_id}, {"$inc": {"coins": -10}})
+    await message.reply(f"<b>╭╼「 📢 {B} ᴀᴅ 」</b>\n<b>├ ʙʏ: {get_mention(user_id, message.from_user.first_name)}</b>\n<b>├ ᴍsɢ: {ad}</b>\n<b>╰╼━━━━╾╯</b>")
 
 @app.on_message(filters.command("shop") & filters.group)
 async def shop_handler(client, message: Message):
     await del_cmd(message)
+    user_id = message.from_user.id
     if len(message.text.split()) == 1:
-        return await message.reply(f"<b>┌╼「 🛒 {B} sʜᴏᴘ 」</b>\n<b>├ 1. VIP (15) | 2. KING (15)</b>\n<b>└╼━━━━╾┘</b>")
+        return await message.reply(f"<b>╭╼「 🛒 sʜᴏᴘ 」</b>\n<b>├ 1. VIP (15) • 2. KING (15)</b>\n<b>╰╼━━━━╾╯</b>")
     title = "VIP" if message.text.split()[1] == "1" else "KING"
-    user = users_col.find_one({"user_id": message.from_user.id})
+    user = users_col.find_one({"user_id": user_id})
     if user['coins'] >= 15:
-        users_col.update_one({"user_id": message.from_user.id}, {"$inc": {"coins": -15}, "$set": {"title": title}})
-        await message.reply(f"<b>🔥 ɴᴏᴡ ʏᴏᴜ ᴀʀᴇ {title}!</b>")
+        users_col.update_one({"user_id": user_id}, {"$inc": {"coins": -15}, "$set": {"title": title}})
+        await message.reply(f"<b>🔥 {get_mention(user_id, message.from_user.first_name)} ɪs ɴᴏᴡ {title}!</b>")
 
-# --- 7. MISSION (80 MSG = 1 COIN) & AUTO SYNC ---
+# --- 7. MISSION & AUTO SYNC ---
 @app.on_message(filters.group & ~filters.bot, group=1)
 async def mission_tracker(client, message: Message):
     if not message.from_user: return
