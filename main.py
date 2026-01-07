@@ -17,18 +17,17 @@ BOT_TOKEN = "8513850569:AAHCsKyy1nWTYVKH_MtbW8IhKyOckWLTEDA"
 B = "ᴅx" 
 URL = "https://dark-coin.onrender.com"
 
-# --- FIREBASE CONNECTION ---
+# --- FIREBASE CONNECTION (FIXED) ---
 FIREBASE_DB_URL = "https://dxsimu-c0f49-default-rtdb.firebaseio.com"
 
-# Firebase Initialize (সার্ভিস অ্যাকাউন্ট কি ছাড়া শুধু URL দিয়ে এক্সেস করার জন্য)
 if not firebase_admin._apps:
-    cred = credentials.Anonymous() # পাবলিক রুলস থাকলে এটি কাজ করবে
-    firebase_admin.initialize_app(cred, {
+    # credentials.Anonymous() এর বদলে সরাসরি নিচের মত ডিক্লেয়ার করুন
+    firebase_admin.initialize_app(options={
         'databaseURL': FIREBASE_DB_URL
     })
 
-# ডাটাবেস রেফারেন্স
-ref = db.reference("users")
+# Main Database Reference
+db_ref = db.reference("users")
 
 # --- ANTI-SLEEP PING ---
 def keep_alive_ping():
@@ -51,30 +50,29 @@ def run_web():
 app = Client("DX_COIN_FIREBASE", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN, in_memory=True)
 INIT_SUDO = [6366113192, 6703335929, 6737589257]
 
-# --- HELPERS (FIREBASE VERSION) ---
+# --- HELPERS (FIREBASE SYNC) ---
 def sync_data(user):
     if not user: return None
     uid = str(user.id)
     name = f"{user.first_name} {user.last_name or ''}".strip()
-    user_ref = ref.child(uid)
+    user_ref = db_ref.child(uid)
     data = user_ref.get()
     
     if not data:
-        new_data = {
-            "user_id": uid, "full_name": name, "username": user.username,
+        data = {
+            "user_id": uid, "full_name": name, "username": user.username or "None",
             "coins": 0, "vault": 0, "v_time": int(time.time()), 
             "msg_count": 0, "last_claim": 0, "is_sudo": 0, "title": "ɴᴏɴᴇ"
         }
-        user_ref.set(new_data)
-        return new_data
+        user_ref.set(data)
     else:
-        user_ref.update({"full_name": name, "username": user.username})
-        return data
+        user_ref.update({"full_name": name, "username": user.username or "None"})
+    return data
 
 async def check_sudo(user_id):
     if user_id in INIT_SUDO: return True
-    data = ref.child(str(user_id)).get()
-    return data.get('is_sudo', 0) == 1 if data else False
+    data = db_ref.child(str(user_id)).get()
+    return (data.get('is_sudo', 0) == 1) if data else False
 
 def get_mention(user_id, name):
     clean_name = re.sub(r'[<>#]', '', name or "User")
@@ -103,10 +101,9 @@ async def check_stats(client, message: Message):
     await del_cmd(message)
     target = message.reply_to_message.from_user if message.reply_to_message else message.from_user
     u = sync_data(target)
-    if not u: return
     
-    all_users = ref.get() or {}
-    sorted_users = sorted(all_users.values(), key=lambda x: x.get('coins', 0), reverse=True)
+    all_data = db_ref.get() or {}
+    sorted_users = sorted(all_data.values(), key=lambda x: x.get('coins', 0), reverse=True)
     rank = next((i for i, x in enumerate(sorted_users, 1) if str(x['user_id']) == str(target.id)), len(sorted_users))
     
     await message.reply_text(
@@ -121,13 +118,13 @@ async def check_stats(client, message: Message):
 @app.on_message(filters.command("top") & filters.group)
 async def leaderboard(client, message: Message):
     await del_cmd(message)
-    all_users = ref.get() or {}
-    sorted_users = sorted(all_users.values(), key=lambda x: x.get('coins', 0), reverse=True)[:10]
+    all_data = db_ref.get() or {}
+    sorted_users = sorted(all_data.values(), key=lambda x: x.get('coins', 0), reverse=True)[:10]
     
     board = f"<b>┌╼「 🏆 ᴛᴏᴘ 10 」</b>\n"
     for i, r in enumerate(sorted_users, 1):
         emoji = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else "🔹"
-        board += f"<b>├ {emoji} {i:02d}.</b> {get_mention(r['user_id'], r['full_name'])} ➲ <code>{r['coins']}</code>\n"
+        board += f"<b>├ {emoji} {i:02d}.</b> {get_mention(r['user_id'], r['full_name'])} ➲ <code>{r.get('coins', 0)}</code>\n"
     board += f"<b>└╼━━━━ {B} ━━━━╾┘</b>"
     await message.reply_text(board)
 
@@ -139,7 +136,7 @@ async def daily_claim(client, message: Message):
     if time.time() - u.get('last_claim', 0) < 86400: 
         return await message.reply("<b>┌╼「 🎁 」\n├ ❌ ᴛʀʏ ᴛᴏᴍᴏʀʀᴏᴡ!\n└╼━━━━╾┘</b>")
     
-    ref.child(uid).update({"coins": u.get('coins', 0) + 100, "last_claim": int(time.time())})
+    db_ref.child(uid).update({"coins": u.get('coins', 0) + 100, "last_claim": int(time.time())})
     await message.reply("<b>┌╼「 🎁 」\n├ ✅ 100 ᴄᴏɪɴs ᴄʟᴀɪᴍᴇᴅ!\n└╼━━━━╾┘</b>")
 
 # --- 3. VAULT, GIFT, SHOP ---
@@ -159,10 +156,10 @@ async def vault_handler(client, message: Message):
             act, amt = parts[1], int(parts[2])
             if amt <= 0: return
             if act == "dep" and u.get('coins', 0) >= amt:
-                ref.child(uid).update({"coins": u['coins']-amt, "vault": u['vault']+amt, "v_time": int(time.time())})
+                db_ref.child(uid).update({"coins": u['coins']-amt, "vault": u['vault']+amt, "v_time": int(time.time())})
                 await message.reply("<b>├ ✅ ᴅᴇᴘᴏsɪᴛᴇᴅ!</b>")
             elif act == "wd" and u.get('vault', 0) >= amt:
-                ref.child(uid).update({"coins": u['coins']+amt, "vault": u['vault']-amt})
+                db_ref.child(uid).update({"coins": u['coins']+amt, "vault": u['vault']-amt})
                 await message.reply("<b>├ 🔓 ᴡɪᴛʜᴅʀᴀᴡɴ!</b>")
         except: pass
 
@@ -177,10 +174,24 @@ async def gift_coin(client, message: Message):
         s_u = sync_data(message.from_user)
         r_u = sync_data(message.reply_to_message.from_user)
         if s_u['coins'] >= amt:
-            ref.child(sid).update({"coins": s_u['coins'] - amt})
-            ref.child(rid).update({"coins": r_u['coins'] + amt})
+            db_ref.child(sid).update({"coins": s_u['coins'] - amt})
+            db_ref.child(rid).update({"coins": r_u['coins'] + amt})
             await message.reply(f"<b>┌╼「 🎁 」\n├ 💸 {amt} ᴄᴏɪɴs sᴇɴᴛ!\n└╼━━━━╾┘</b>")
     except: pass
+
+@app.on_message(filters.command("shop") & filters.group)
+async def shop_handler(client, message: Message):
+    await del_cmd(message)
+    uid = str(message.from_user.id)
+    u = sync_data(message.from_user)
+    if len(message.text.split()) == 1:
+        return await message.reply(f"<b>┌╼「 🛒 sʜᴏᴘ 」</b>\n<b>├ 1. VIP (15) | 2. KING (15)</b>\n<b>└╼━━━━╾┘</b>")
+    
+    choice = message.text.split()[1]
+    title = "VIP" if choice == "1" else "KING"
+    if u.get('coins', 0) >= 15:
+        db_ref.child(uid).update({"coins": u['coins']-15, "title": title})
+        await message.reply(f"<b>├ 🔥 ɴᴏᴡ ʏᴏᴜ ᴀʀᴇ {title}!</b>")
 
 # --- 4. SUDO ENGINE ---
 @app.on_message(filters.command("sudo") & filters.group)
@@ -191,11 +202,11 @@ async def sudo_handler(client, message: Message):
         t_id = str(target.id)
         u = sync_data(target)
         new_val = 1 if u.get('is_sudo', 0) == 0 else 0
-        ref.child(t_id).update({"is_sudo": new_val})
+        db_ref.child(t_id).update({"is_sudo": new_val})
         await message.reply_text(f"<b>├ ⚡ sᴜᴅᴏ ᴜᴘᴅᴀᴛᴇᴅ!</b>")
     else:
-        all_u = ref.get() or {}
-        sudos = [v for v in all_u.values() if v.get('is_sudo') == 1]
+        all_data = db_ref.get() or {}
+        sudos = [v for v in all_data.values() if v.get('is_sudo') == 1]
         res = f"<b>┌╼「 ✨ sᴜᴅᴏ ᴜsᴇʀs 」</b>\n"
         for i, s in enumerate(sudos, 1): res += f"<b>├ {i}.</b> {get_mention(s['user_id'], s['full_name'])}\n"
         res += f"<b>└╼━━━━╾┘</b>"
@@ -209,26 +220,58 @@ async def add_coin(client, message: Message):
         amt = int(message.text.split()[1])
         t_id = str(message.reply_to_message.from_user.id)
         u = sync_data(message.reply_to_message.from_user)
-        ref.child(t_id).update({"coins": u.get('coins', 0) + amt})
+        db_ref.child(t_id).update({"coins": u.get('coins', 0) + amt})
         await message.reply(f"<b>├ 💰 ᴀᴅᴅᴇᴅ {amt} ᴄᴏɪɴs!</b>")
     except: pass
     await del_cmd(message)
+
+@app.on_message(filters.command("mcoin") & filters.group)
+async def minus_coin(client, message: Message):
+    if not await check_sudo(message.from_user.id) or not message.reply_to_message: return await del_cmd(message)
+    try:
+        amt = int(message.text.split()[1])
+        t_id = str(message.reply_to_message.from_user.id)
+        u = sync_data(message.reply_to_message.from_user)
+        db_ref.child(t_id).update({"coins": max(0, u.get('coins', 0) - amt)})
+        await message.reply(f"<b>├ 🔻 ᴍɪɴᴜs {amt} ᴄᴏɪɴs!</b>")
+    except: pass
+    await del_cmd(message)
+
+@app.on_message(filters.command("reset") & filters.group)
+async def reset_coin(client, message: Message):
+    if not await check_sudo(message.from_user.id) or not message.reply_to_message: return await del_cmd(message)
+    t_id = str(message.reply_to_message.from_user.id)
+    db_ref.child(t_id).update({"coins": 0})
+    await message.reply(f"<b>├ 🌀 ʙᴀʟᴀɴᴄᴇ ʀᴇsᴇᴛ!</b>")
+
+@app.on_message(filters.command("buyad") & filters.group)
+async def buy_ad(client, message: Message):
+    await del_cmd(message)
+    uid = str(message.from_user.id)
+    u = sync_data(message.from_user)
+    if u.get('coins', 0) < 10: return await message.reply("<b>├ ❌ ɴᴇᴇᴅ 10 ᴄᴏɪɴs!</b>")
+    try:
+        ad = message.text.split(None, 1)[1]
+        db_ref.child(uid).update({"coins": u['coins']-10})
+        await message.reply(f"<b>┌╼「 📢 ᴀᴅ 」\n├ ʙʏ: {get_mention(uid, message.from_user.first_name)}\n├ ᴍsɢ: {ad}\n└╼━━━━╾┘</b>")
+    except: pass
 
 # --- 5. MISSIONS ---
 @app.on_message(filters.group & ~filters.bot, group=1)
 async def mission_tracker(client, message: Message):
     if not message.from_user: return
-    u = sync_data(message.from_user)
     uid = str(message.from_user.id)
+    u = sync_data(message.from_user)
+    
     if u.get('msg_count', 0) + 1 >= 80:
-        ref.child(uid).update({"msg_count": 0, "coins": u.get('coins', 0) + 1})
+        db_ref.child(uid).update({"msg_count": 0, "coins": u.get('coins', 0) + 1})
         await message.reply(f"<b>🏆 {get_mention(uid, u['full_name'])} ᴇᴀʀɴᴇᴅ 1 ᴄᴏɪɴ!</b>")
     else:
-        ref.child(uid).update({"msg_count": u.get('msg_count', 0) + 1})
+        db_ref.child(uid).update({"msg_count": u.get('msg_count', 0) + 1})
 
 # --- RUN ---
 if __name__ == "__main__":
     Thread(target=run_web).start()
     Thread(target=keep_alive_ping).start()
-    print("🚀 Bot started with Firebase!")
+    print("🚀 Bot started with Fixed Firebase!")
     app.run()
