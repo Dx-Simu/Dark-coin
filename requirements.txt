@@ -1,6 +1,5 @@
 pyrogram
 tgcrypto
-pymongo
-dnspython
+supabase
 flask
 requests
