@@ -196,8 +196,8 @@ async def daily_claim(client, message: Message):
     user = users_col.find_one({"user_id": user_id})
     if time.time() - user.get("last_claim", 0) < 86400: 
         return await message.reply(f"<b>❌ {get_mention(user_id, message.from_user.first_name)}, ᴛʀʏ ᴛᴏᴍᴏʀʀᴏᴡ!</b>")
-    users_col.update_one({"user_id": user_id}, {"$inc": {"coins": 100}, "$set": {"last_claim": time.time()}})
-    await message.reply(f"<b>🎁 {get_mention(user_id, message.from_user.first_name)}, 100 ᴄᴏɪɴs ᴄʟᴀɪᴍᴇᴅ!</b>")
+    users_col.update_one({"user_id": user_id}, {"$inc": {"coins": 1}, "$set": {"last_claim": time.time()}})
+    await message.reply(f"<b>🎁 {get_mention(user_id, message.from_user.first_name)}, 1 ᴄᴏɪɴs ᴄʟᴀɪᴍᴇᴅ!</b>")
 
 @app.on_message(filters.command("gift") & filters.group)
 async def gift_coin(client, message: Message):
@@ -244,7 +244,7 @@ async def mission_tracker(client, message: Message):
     sync_data(message.from_user)
     users_col.update_one({"user_id": message.from_user.id}, {"$inc": {"msg_count": 1}})
     user = users_col.find_one({"user_id": message.from_user.id})
-    if user.get('msg_count', 0) >= 80:
+    if user.get('msg_count', 0) >= 100:
         users_col.update_one({"user_id": message.from_user.id}, {"$inc": {"coins": 1}, "$set": {"msg_count": 0}})
         await message.reply(f"<b>🏆 {get_mention(user['user_id'], user['full_name'])} ᴇᴀʀɴᴇᴅ 1 ᴄᴏɪɴ!</b>")
 
