@@ -1,5 +1,5 @@
 pyrogram
 tgcrypto
-firebase-admin
+Pyrebase4
 flask
 requests
