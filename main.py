@@ -14,16 +14,20 @@ API_ID = 20579940
 API_HASH = "6fc0ea1c8dacae05751591adedc177d7"
 BOT_TOKEN = "8513850569:AAHCsKyy1nWTYVKH_MtbW8IhKyOckWLTEDA"
 
-# আপনার দেওয়া নতুন মঙ্গো ইউআরএল এবং পাসওয়ার্ড এখানে সেট করা হয়েছে
+# আপনার দেওয়া নতুন মঙ্গো ইউআরএল (Password: 8AIIxZUjpanaQBjh)
 MONGO_URL = "mongodb+srv://shadowur6_db_user:8AIIxZUjpanaQBjh@dx-codex.fmqcovu.mongodb.net/?retryWrites=true&w=majority&appName=Dx-codex"
 
 B = "ᴅx" 
 URL = "https://dark-coin.onrender.com"
 
 # --- MONGODB SETUP ---
-mongo_client = MongoClient(MONGO_URL)
-db = mongo_client["dx_coin_db"]
-users_col = db["users"]
+try:
+    mongo_client = MongoClient(MONGO_URL)
+    db = mongo_client["dx_coin_db"]
+    users_col = db["users"]
+    print("✅ MongoDB Connected Successfully!")
+except Exception as e:
+    print(f"❌ MongoDB Connection Error: {e}")
 
 # --- ANTI-SLEEP PING ---
 def keep_alive_ping():
@@ -37,7 +41,7 @@ def keep_alive_ping():
 # --- WEB SERVER ---
 web = Flask('')
 @web.route('/')
-def home(): return f"<b>{B} SYSTEM ONLINE (NEW MONGODB)</b>"
+def home(): return f"<b>{B} SYSTEM ONLINE (MONGODB)</b>"
 
 def run_web():
     port = int(os.environ.get('PORT', 8080))
@@ -275,5 +279,8 @@ async def mission_tracker(client, message: Message):
 if __name__ == "__main__":
     Thread(target=run_web).start()
     Thread(target=keep_alive_ping).start()
-    print("🚀 Bot started with DX-Codex MongoDB & Premium Design!")
+    print("┌╼━━━━━━━━━━━━━━━╾┐")
+    print("│ ✨ DX SYSTEM ACTIVE │")
+    print("│ 📂 DB: MONGODB      │")
+    print("└╼━━━━━━━━━━━━━━━╾┘")
     app.run()
