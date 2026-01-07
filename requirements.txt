@@ -1,5 +1,6 @@
 pyrogram
 tgcrypto
-pymongo[srv]
+pymongo
+dnspython
 flask
 requests
