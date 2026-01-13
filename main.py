@@ -51,14 +51,14 @@ def get_rank_badge(coins):
     elif coins >= 200: return "🌟🌟🌟 (ᴀᴅ/ʀᴜʟᴇʀ)"
     elif coins >= 100: return "🌟🌟 (ʜ-ᴄᴀᴘᴛᴀɪɴ)"
     elif coins >= 50: return "🌟 (ᴅᴇs-ɴᴀᴍᴇ)"
-    return "🌑"
+    return "⚪️"
 
 def sync_data(user):
     if not user: return
     users_col.update_one(
         {"user_id": user.id},
         {"$set": {"full_name": f"{user.first_name} {user.last_name or ''}".strip(), "username": user.username}, 
-         "$setOnInsert": {"coins": 0, "vault": 0, "v_time": time.time(), "msg_count": 0, "last_claim": 0, "is_sudo": 0}},
+         "$setOnInsert": {"coins": 0, "vault": 0, "v_time": time.time(), "last_claim": 0, "is_sudo": 0}},
         upsert=True
     )
 
@@ -97,6 +97,19 @@ async def add_coin(client, message: Message):
         target = message.reply_to_message.from_user
         users_col.update_one({"user_id": target.id}, {"$inc": {"coins": amt}})
         await message.reply(f"<b>┏━━━━「 ✅ ᴀᴅᴅ 」━━━━┓\n┃ 👤: {get_mention(target.id, target.first_name)}\n┃ 💰: {amt} ᴄᴏɪɴs ᴀᴅᴅᴇᴅ\n┗━━━━━━━━━━━━━━┛</b>")
+    except: pass
+
+@app.on_message(filters.command("mcoin") & filters.group)
+async def minus_coin(client, message: Message):
+    if not await check_sudo(message.from_user.id): return await del_cmd(message)
+    await del_cmd(message)
+    if not message.reply_to_message or len(message.text.split()) < 2:
+        return await message.reply(f"{get_mention(message.from_user.id, message.from_user.first_name)} ⚠️ ᴜsᴀɢᴇ: ʀᴇᴘʟʏ ᴛᴏ ᴜsᴇʀ `/mcoin 10`")
+    try:
+        amt = int(message.text.split()[1])
+        target = message.reply_to_message.from_user
+        users_col.update_one({"user_id": target.id}, {"$inc": {"coins": -amt}})
+        await message.reply(f"<b>┏━━━━「 🔻 ᴍɪɴᴜs 」━━━━┓\n┃ 👤: {get_mention(target.id, target.first_name)}\n┃ 💰: {amt} ᴄᴏɪɴs ᴍɪɴᴜsᴇᴅ\n┗━━━━━━━━━━━━━━┛</b>")
     except: pass
 
 @app.on_message(filters.command("gift") & filters.group)
@@ -138,9 +151,20 @@ async def check_stats(client, message: Message):
         f"<b>┃ 🏦 ᴠᴀᴜʟᴛ: {user.get('vault', 0)} ᴄᴏɪɴs</b>\n"
         f"<b>┃ 🏆 ʀᴀɴᴋɪɴɢ: #{rank}</b>\n"
         f"<b>┃ 🎖️ ʙᴀᴅɢᴇ: {badge}</b>\n"
-        f"<b>┃ 📩 ᴍsɢs: {user.get('msg_count', 0)}</b>\n"
         f"<b>┗━━━━━━━━━━━━━━┛</b>"
     )
+
+@app.on_message(filters.command("claim") & filters.group)
+async def daily_claim(client, message: Message):
+    await del_cmd(message)
+    user_id = message.from_user.id
+    user = users_col.find_one({"user_id": user_id})
+    last_claim = user.get("last_claim", 0)
+    if time.time() - last_claim < 259200:
+        rem = 259200 - (time.time() - last_claim)
+        return await message.reply(f"<b>┏━━━━「 ⏳ ᴡᴀɪᴛ 」━━━━┓\n┃ 👤: {get_mention(user_id, message.from_user.first_name)}\n┃ ⏳ ɴᴇxᴛ: {str(timedelta(seconds=int(rem)))}\n┗━━━━━━━━━━━━━━┛</b>")
+    users_col.update_one({"user_id": user_id}, {"$inc": {"coins": 1}, "$set": {"last_claim": time.time()}})
+    await message.reply(f"<b>┏━━━━「 ✅ ᴅᴏɴᴇ 」━━━━┓\n┃ 👤: {get_mention(user_id, message.from_user.first_name)}\n┃ 💰: 1 ᴄᴏɪɴ ᴄʟᴀɪᴍᴇᴅ!\n┗━━━━━━━━━━━━━━┛</b>")
 
 @app.on_message(filters.command("vault") & filters.group)
 async def vault_handler(client, message: Message):
@@ -168,7 +192,7 @@ async def vault_handler(client, message: Message):
             users_col.update_one({"user_id": user_id}, {"$inc": {"coins": amt, "vault": -amt}})
             await message.reply(f"<b>🔓 {amt} ᴄᴏɪɴs ᴡɪᴛʜᴅʀᴀᴡɴ ғʀᴏᴍ ᴠᴀᴜʟᴛ!</b>")
         else:
-            await message.reply("❌ ɪɴᴠᴀʟɪᴅ ᴀᴍᴏᴜɴᴛ ᴏʀ ɴᴏᴛ ᴇɴᴏᴜɢʜ ᴄᴏɪɴs!")
+            await message.reply("❌ ɪɴsᴜғғɪᴄɪᴇɴᴛ ᴄᴏɪɴs!")
     except:
         await message.reply(f"⚠️ {get_mention(user_id, message.from_user.first_name)} ᴜsᴇ `/vault dep 10` ᴏʀ `/vault wd 10`")
 
@@ -176,7 +200,7 @@ async def vault_handler(client, message: Message):
 async def usage_handler(client, message: Message):
     await del_cmd(message)
     await message.reply_text(
-        f"<b>┏━━━「 🛠️ ᴄᴏɪɴ ᴜsᴀɢᴇ 」━┓</b>\n"
+        f"<b>┏━━━「 🛠️ ᴄᴏɪɴ ᴜsᴀɢᴇ 」━━━┓</b>\n"
         f"<b>┃ 👤: {get_mention(message.from_user.id, message.from_user.first_name)}</b>\n"
         f"<b>┣━━━━━━━━━━━━━━</b>\n"
         f"<b>┃ 📌 /coin - ᴄʜᴇᴄᴋ ʏᴏᴜʀ ʙᴀʟᴀɴᴄᴇ</b>\n"
@@ -193,17 +217,14 @@ async def usage_handler(client, message: Message):
     )
 
 @app.on_message(filters.group & ~filters.bot)
-async def auto_handler(client, message: Message):
-    if message.from_user:
-        sync_data(message.from_user)
-        users_col.update_one({"user_id": message.from_user.id}, {"$inc": {"msg_count": 1}})
+async def auto_sync(client, message: Message):
+    if message.from_user: sync_data(message.from_user)
 
-# --- REST OF THE CODE REMAINS SAME (Rules, Top, Sudo, Start) ---
 @app.on_message(filters.command("crules") & filters.group)
 async def rules_handler(client, message: Message):
     await del_cmd(message)
     await message.reply_text(
-        f"<b>┏━━━━「 📜 {B} ʀᴜʟᴇs 」━━━━┓</b>\n"
+        f"<b>┏━━━「 📜 {B} ʀᴜʟᴇs 」━━━┓</b>\n"
         f"<b>┃ 👤: {get_mention(message.from_user.id, message.from_user.first_name)}</b>\n"
         f"<b>┣━━━━━━━━━━━━━━</b>\n"
         f"<b>┃ 🔸 ᴅᴀʀᴋ ɢᴀɴɢ ᴜ-ᴀᴅᴅ: 2 ᴄᴏɪɴ</b>\n"
@@ -229,18 +250,6 @@ async def leaderboard(client, message: Message):
         board += f"<b>┃ ╰╼ 💰 {row.get('coins', 0)} • {get_rank_badge(row.get('coins'))}</b>\n"
     board += f"<b>┗━━━━━━━━━━━━━━┛</b>"
     await message.reply_text(board)
-
-@app.on_message(filters.command("claim") & filters.group)
-async def daily_claim(client, message: Message):
-    await del_cmd(message)
-    user_id = message.from_user.id
-    user = users_col.find_one({"user_id": user_id})
-    last_claim = user.get("last_claim", 0)
-    if time.time() - last_claim < 259200:
-        rem = 259200 - (time.time() - last_claim)
-        return await message.reply(f"<b>┏━━━━「 ⏳ ᴡᴀɪᴛ 」━━━━┓\n┃ 👤: {get_mention(user_id, message.from_user.first_name)}\n┃ ⏳ ɴᴇxᴛ: {str(timedelta(seconds=int(rem)))}\n┗━━━━━━━━━━━━━━┛</b>")
-    users_col.update_one({"user_id": user_id}, {"$inc": {"coins": 1}, "$set": {"last_claim": time.time()}})
-    await message.reply(f"<b>┏━━━━「 ✅ ᴅᴏɴᴇ 」━━━━┓\n┃ 👤: {get_mention(user_id, message.from_user.first_name)}\n┃ 💰: 1 ᴄᴏɪɴ ᴄʟᴀɪᴍᴇᴅ!\n┗━━━━━━━━━━━━━━┛</b>")
 
 @app.on_message(filters.command("sudo") & filters.group)
 async def sudo_handler(client, message: Message):
