@@ -197,9 +197,9 @@ async def usage_handler(client, message: Message):
         f"<b>┃ 🛒 /shop - ᴠɪᴇᴡ ɪᴛᴇᴍs ᴛᴏ ʙᴜʏ</b>\n"
         f"<b>┃ 📢 /buyad [ɴᴏ] - ʙᴜʏ sʜᴏᴘ ɪᴛᴇᴍs</b>\n"
         f"<b>┃ 📜 /crules - sᴇᴇ ᴇᴀʀɴɪɴɢ ʀᴜʟᴇs</b>\n"
-        f"<b>┣━━━━━━━━━━━━━━━━━━</b>\n"
+        f"<b>┣━━━━━━━━━━━━━━━━━</b>\n"
         f"<b>┃ ⚡ sᴜᴅᴏ ᴄᴏᴍᴍᴀɴᴅs: /acoin, /mcoin</b>\n"
-        f"<b>┗━━━━━━━━━━━━━━━━━━┛</b>"
+        f"<b>┗━━━━━━━━━━━━━━━━┛</b>"
     )
     await message.reply_text(usage_text)
 
