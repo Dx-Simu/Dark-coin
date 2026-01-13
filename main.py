@@ -185,9 +185,9 @@ async def check_stats(client, message: Message):
 async def usage_handler(client, message: Message):
     await del_cmd(message)
     usage_text = (
-        f"<b>┏━━━━「 🛠️ {B} ʜᴇʟᴘ ɢᴜɪᴅᴇ 」━━━━┓</b>\n"
+        f"<b>┏━━━「 🛠️ {B} ʜᴇʟᴘ ɢᴜɪᴅᴇ 」━━┓</b>\n"
         f"<b>┃ 👤: {get_mention(message.from_user.id, message.from_user.first_name)}</b>\n"
-        f"<b>┣━━━━━━━━━━━━━━━━━━━━</b>\n"
+        f"<b>┣━━━━━━━━━━━━━━━━━</b>\n"
         f"<b>┃ 📊 /coin - ᴄʜᴇᴄᴋ ʏᴏᴜʀ ʙᴀʟᴀɴᴄᴇ</b>\n"
         f"<b>┃ 🏆 /ctop - sʜᴏᴡ ᴛᴏᴘ ʀɪᴄʜ ᴜsᴇʀs</b>\n"
         f"<b>┃ 🎁 /claim - ɢᴇᴛ ғʀᴇᴇ ᴅᴀɪʟʏ ᴄᴏɪɴ</b>\n"
@@ -197,9 +197,9 @@ async def usage_handler(client, message: Message):
         f"<b>┃ 🛒 /shop - ᴠɪᴇᴡ ɪᴛᴇᴍs ᴛᴏ ʙᴜʏ</b>\n"
         f"<b>┃ 📢 /buyad [ɴᴏ] - ʙᴜʏ sʜᴏᴘ ɪᴛᴇᴍs</b>\n"
         f"<b>┃ 📜 /crules - sᴇᴇ ᴇᴀʀɴɪɴɢ ʀᴜʟᴇs</b>\n"
-        f"<b>┣━━━━━━━━━━━━━━━━━━━━</b>\n"
+        f"<b>┣━━━━━━━━━━━━━━━━━━</b>\n"
         f"<b>┃ ⚡ sᴜᴅᴏ ᴄᴏᴍᴍᴀɴᴅs: /acoin, /mcoin</b>\n"
-        f"<b>┗━━━━━━━━━━━━━━━━━━━━┛</b>"
+        f"<b>┗━━━━━━━━━━━━━━━━━━┛</b>"
     )
     await message.reply_text(usage_text)
 
