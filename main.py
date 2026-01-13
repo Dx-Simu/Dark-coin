@@ -176,7 +176,7 @@ async def vault_handler(client, message: Message):
 async def usage_handler(client, message: Message):
     await del_cmd(message)
     await message.reply_text(
-        f"<b>┏━━━━「 🛠️ ᴄᴏɪɴ ᴜsᴀɢᴇ 」━━━━┓</b>\n"
+        f"<b>┏━━━「 🛠️ ᴄᴏɪɴ ᴜsᴀɢᴇ 」━┓</b>\n"
         f"<b>┃ 👤: {get_mention(message.from_user.id, message.from_user.first_name)}</b>\n"
         f"<b>┣━━━━━━━━━━━━━━</b>\n"
         f"<b>┃ 📌 /coin - ᴄʜᴇᴄᴋ ʏᴏᴜʀ ʙᴀʟᴀɴᴄᴇ</b>\n"
