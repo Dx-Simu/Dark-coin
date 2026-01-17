@@ -143,7 +143,7 @@ async def check_stats(client, message: Message):
     rank = users_col.count_documents({"coins": {"$gt": user['coins']}}) + 1
     
     await message.reply_text(
-        f"<b>┏━━━━「 📊 ᴄᴏɪɴ sᴛᴀᴛs 」━━━━┓</b>\n"
+        f"<b>┏━━「 📊 ᴄᴏɪɴ sᴛᴀᴛs 」━━┓</b>\n"
         f"<b>┃ 👤 ɴᴀᴍᴇ: {get_mention(target.id, target.first_name)}</b>\n"
         f"<b>┃ 🆔 ᴜ-ɪᴅ: <code>{target.id}</code></b>\n"
         f"<b>┣━━━━━━━━━━━━━━</b>\n"
