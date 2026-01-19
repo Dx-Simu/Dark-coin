@@ -241,7 +241,7 @@ async def rules_h(client, message):
         f"<b>┃ ⭐⭐: 100+ (ʜ-ᴄᴀᴘᴛᴀɪɴ)</b>\n"
         f"<b>┃ ⭐⭐⭐: 200+ (ʀᴜʟᴇʀ)</b>\n"
         f"<b>┃ 💎: 400+ (ᴄᴏᴅᴇ ᴏᴡɴᴇʀ)</b>\n"
-        f"<b>┗━━━━━━━━━━━━━━━━━┛</b>"
+        f"<b>┗━━━━━━━━━━━━━━━━┛</b>"
     )
     
 @app.on_message(filters.command("sudo") & filters.group)
