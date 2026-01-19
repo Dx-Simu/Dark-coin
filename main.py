@@ -227,8 +227,23 @@ async def vault_handler(client, message):
 async def rules_h(client, message):
     await del_cmd(message)
     m = get_mention(message.from_user.id, message.from_user.first_name)
-    await message.reply_text(f"<b>┏━━「 📜 ʀᴜʟᴇs 」━━┓\n┃ 👤: {m}\n┃ 🔸 ᴅ-ɢᴀɴɢ: 2\n┃ 🔹 ᴀᴅᴅᴀ(500+): 5\n┃ 🔸 ʜᴏᴛʟɪɴᴇ: 10\n┗━━━━━━━━━━┛</b>")
-
+    await message.reply_text(
+        f"<b>┏━━━「 📜 {B} ʀᴜʟᴇs 」━━━┓</b>\n"
+        f"<b>┃ 👤: {get_mention(message.from_user.id, message.from_user.first_name)}</b>\n"
+        f"<b>┣━━━━━━━━━━━━━━━━━</b>\n"
+        f"<b>┃ 🔸 ᴅᴀʀᴋ ɢᴀɴɢ ᴜ-ᴀᴅᴅ: 2 ᴄᴏɪɴ</b>\n"
+        f"<b>┃ 🔹 ᴀᴅᴅᴀ ɢ-ʜᴀᴄᴋ(500+): 5 ᴄᴏɪɴ</b>\n"
+        f"<b>┃ 🔹 ᴀᴅᴅᴀ ɢ-ʜᴀᴄᴋ(-500): 3 ᴄᴏɪɴ</b>\n"
+        f"<b>┃ 🔸 ʜᴏᴛʟɪɴᴇ ɢ-ʜᴀᴄᴋ: 10 ᴄᴏɪɴ</b>\n"
+        f"<b>┃ 🔹 -15 ʏ-ɢʀᴏᴜᴘ ʜᴀᴄᴋ: 12 ᴄᴏɪɴ</b>\n"
+        f"<b>┣━━━━━ 🎖️ sᴛᴀʀs ━━━━━</b>\n"
+        f"<b>┃ ⭐: 50+ (ᴅᴇs-ɴᴀᴍᴇ)</b>\n"
+        f"<b>┃ ⭐⭐: 100+ (ʜ-ᴄᴀᴘᴛᴀɪɴ)</b>\n"
+        f"<b>┃ ⭐⭐⭐: 200+ (ʀᴜʟᴇʀ)</b>\n"
+        f"<b>┃ 💎: 400+ (ᴄᴏᴅᴇ ᴏᴡɴᴇʀ)</b>\n"
+        f"<b>┗━━━━━━━━━━━━━━━━━┛</b>"
+    )
+    
 @app.on_message(filters.command("sudo") & filters.group)
 async def sudo_h(client, message):
     m = get_mention(message.from_user.id, message.from_user.first_name)
